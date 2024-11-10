@@ -2,7 +2,6 @@ from collections import UserDict
 from datetime import datetime, timedelta
 
 
-
 def input_error(func):
     def wrapper(*args, **kwargs):
         try:
@@ -129,6 +128,12 @@ class AddressBook(UserDict):
                 bday_this_year = datetime.strptime(record.birthday.value, "%d.%m.%Y").date().replace(year=today.year)
                 
                 if today <= bday_this_year <= seven_days_later:
+                    # Перевіряємо, чи день народження випадає на вихідний
+                    if bday_this_year.weekday() == 5:  # Субота
+                        bday_this_year += timedelta(days=2)  # Переносимо на понеділок
+                    elif bday_this_year.weekday() == 6:  # Неділя
+                        bday_this_year += timedelta(days=1)  # Переносимо на понеділок
+                    
                     upcoming_birthdays.append({
                         "name": record.name.value,
                         "birthday": bday_this_year
@@ -142,6 +147,7 @@ class AddressBook(UserDict):
 
 
 
+@input_error
 def handle_add(args, address_book):
     if len(args) == 2:
         name, phone = args
@@ -156,6 +162,7 @@ def handle_add(args, address_book):
     return "Error: 'add' command should have two arguments [name] [phone]"
 
 
+@input_error
 def handle_change(args, address_book):
     if len(args) == 3:
         name, old_phone, new_phone = args
@@ -170,6 +177,7 @@ def handle_change(args, address_book):
     return "Error: 'change' command should have three arguments [name] [old phone] [new phone]"
 
 
+@input_error
 def handle_phone(args, address_book):
     if len(args) == 1:
         name = args[0]
@@ -180,10 +188,12 @@ def handle_phone(args, address_book):
     return "Error: 'phone' command should have one argument [name]"
 
 
+@input_error
 def handle_all(address_book):
     return str(address_book)
 
 
+@input_error
 def handle_add_birthday(args, address_book):
     if len(args) == 2:
         name, birthday = args
@@ -198,6 +208,7 @@ def handle_add_birthday(args, address_book):
     return "Error: 'add-birthday' command should have two arguments [name] [birthday]"
 
 
+@input_error
 def handle_show_birthday(args, address_book):
     if len(args) == 1:
         name = args[0]
@@ -208,15 +219,18 @@ def handle_show_birthday(args, address_book):
     return "Error: 'show-birthday' command should have one argument [name]"
 
 
+@input_error
 def handle_birthdays(address_book):
     upcoming_birthdays = address_book.get_upcoming_birthdays()
     if upcoming_birthdays:
-        return "\n".join(f"{entry['name']}'s birthday is on {entry['birthday']}." for entry in upcoming_birthdays)
+        return "\n".join(
+            f"{entry['name']}'s birthday celebration is on {entry['birthday'].strftime('%d.%m.%Y')}"
+            for entry in upcoming_birthdays
+        )
     return "No birthdays in the next 7 days."
 
 
 
-@input_error
 def main():
     address_book = AddressBook()
 
